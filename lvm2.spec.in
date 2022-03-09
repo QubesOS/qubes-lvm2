@@ -53,11 +53,9 @@
 
 Summary: Userland logical volume management tools
 Name: lvm2
-%if 0%{?rhel}
-Epoch: %{rhel}
-%endif
-Version: 2.03.09
-Release: 1%{?dist}
+Epoch: 1
+Version: @VERSION@
+Release: @REL@%{?dist}
 License: GPLv2
 URL: http://sourceware.org/lvm2
 Source0: ftp://sourceware.org/pub/lvm2/releases/LVM2.%{version}.tgz
