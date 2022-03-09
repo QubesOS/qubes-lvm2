@@ -1,0 +1,36 @@
+ WHATS_NEW_DM    | 4 ++++
+ tools/dmsetup.c | 4 ++--
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/WHATS_NEW_DM b/WHATS_NEW_DM
+index bf16842..9ede901 100644
+--- a/WHATS_NEW_DM
++++ b/WHATS_NEW_DM
+@@ -1,3 +1,7 @@
++Version 1.02.137 -
++=====================================
++  Always exit dmsetup with success when asked to display help/version.
++
+ Version 1.02.136 - 5th November 2016
+ ====================================
+   Log failure of raid device with log_error level.
+diff --git a/tools/dmsetup.c b/tools/dmsetup.c
+index 4b525e2..e48f0a6 100644
+--- a/tools/dmsetup.c
++++ b/tools/dmsetup.c
+@@ -6798,7 +6798,7 @@ unknown:
+ 	if (_switches[COLS_ARG]) {
+ 		if (!_report_init(cmd, subcommand))
+ 			ret = 1;
+- 		if (!_report)
++		if (ret || !_report)
+ 			goto_out;
+ 	}
+ 
+@@ -6864,5 +6864,5 @@ out:
+ 	if (_initial_timestamp)
+ 		dm_timestamp_destroy(_initial_timestamp);
+ 
+-	return ret;
++	return (_switches[HELP_ARG] || _switches[VERSION_ARG]) ? 0 : ret;
+ }

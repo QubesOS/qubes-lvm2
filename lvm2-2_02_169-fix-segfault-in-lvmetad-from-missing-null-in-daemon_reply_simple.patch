@@ -1,0 +1,50 @@
+ WHATS_NEW                      | 4 ++++
+ daemons/lvmetad/lvmetad-core.c | 9 ++++++---
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/WHATS_NEW b/WHATS_NEW
+index 4f11256..029d498 100644
+--- a/WHATS_NEW
++++ b/WHATS_NEW
+@@ -1,3 +1,7 @@
++Version 2.02.169 - 
++=====================================
++  Fix segfault in lvmetad from missing NULL in daemon_reply_simple.
++
+ Version 2.02.168 - 
+ ====================================
+   Only log msg as debug if lvm2-lvmdbusd unit missing for D-Bus notification.
+diff --git a/daemons/lvmetad/lvmetad-core.c b/daemons/lvmetad/lvmetad-core.c
+index ee0c52f..1faae11 100644
+--- a/daemons/lvmetad/lvmetad-core.c
++++ b/daemons/lvmetad/lvmetad-core.c
+@@ -2745,7 +2745,8 @@ static response handler(daemon_state s, client_handle h, request r)
+ 							   "expected = %s", state->token,
+ 							   "received = %s", token,
+ 							   "update_pid = " FMTd64, (int64_t)state->update_pid,
+-							   "reason = %s", "another command has populated the cache");
++							   "reason = %s", "another command has populated the cache",
++							   NULL);
+ 			}
+ 
+ 			DEBUGLOG(state, "token_update end len %d pid %d new token %s",
+@@ -2778,7 +2779,8 @@ static response handler(daemon_state s, client_handle h, request r)
+ 					   "expected = %s", state->token,
+ 					   "received = %s", token,
+ 					   "update_pid = " FMTd64, (int64_t)state->update_pid,
+-					   "reason = %s", "another command has populated the cache");
++					   "reason = %s", "another command has populated the cache",
++					   NULL);
+ 	}
+ 
+ 	/* If a pid doing update was cancelled, ignore its update messages. */
+@@ -2793,7 +2795,8 @@ static response handler(daemon_state s, client_handle h, request r)
+ 					   "expected = %s", state->token,
+ 					   "received = %s", token,
+ 					   "update_pid = " FMTd64, (int64_t)state->update_pid,
+-					   "reason = %s", "another command has populated the lvmetad cache");
++					   "reason = %s", "another command has populated the lvmetad cache",
++					   NULL);
+ 	}
+ 
+ 	pthread_mutex_unlock(&state->token_lock);

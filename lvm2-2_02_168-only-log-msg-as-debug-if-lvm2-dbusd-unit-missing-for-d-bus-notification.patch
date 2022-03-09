@@ -1,0 +1,50 @@
+ WHATS_NEW              | 4 ++++
+ lib/notify/lvmnotify.c | 9 ++++++++-
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/WHATS_NEW b/WHATS_NEW
+index 379bd3b..4f11256 100644
+--- a/WHATS_NEW
++++ b/WHATS_NEW
+@@ -1,3 +1,7 @@
++Version 2.02.168 - 
++====================================
++  Only log msg as debug if lvm2-lvmdbusd unit missing for D-Bus notification.
++
+ Version 2.02.167 - 5th November 2016
+ ====================================
+   Use log_error in regex and sysfs filter to describe reason of failure.
+diff --git a/lib/notify/lvmnotify.c b/lib/notify/lvmnotify.c
+index e9f8e29..1daee1e 100644
+--- a/lib/notify/lvmnotify.c
++++ b/lib/notify/lvmnotify.c
+@@ -15,6 +15,8 @@
+ #define LVM_DBUS_DESTINATION "com.redhat.lvmdbus1"
+ #define LVM_DBUS_PATH        "/com/redhat/lvmdbus1/Manager"
+ #define LVM_DBUS_INTERFACE   "com.redhat.lvmdbus1.Manager"
++#define SD_BUS_SYSTEMD_NO_SUCH_UNIT_ERROR "org.freedesktop.systemd1.NoSuchUnit"
++#define SD_BUS_DBUS_SERVICE_UNKNOWN_ERROR "org.freedesktop.DBus.Error.ServiceUnknown"
+ 
+ #ifdef NOTIFYDBUS_SUPPORT
+ #include <systemd/sd-bus.h>
+@@ -26,6 +28,7 @@ int lvmnotify_is_supported(void)
+ 
+ void lvmnotify_send(struct cmd_context *cmd)
+ {
++	static const char _dbus_notification_failed_msg[] = "D-Bus notification failed";
+ 	sd_bus *bus = NULL;
+ 	sd_bus_message *m = NULL;
+ 	sd_bus_error error = SD_BUS_ERROR_NULL;
+@@ -61,7 +64,11 @@ void lvmnotify_send(struct cmd_context *cmd)
+ 				 cmd_name);
+ 
+ 	if (ret < 0) {
+-		log_warn("WARNING: D-Bus notification failed: %s", error.message);
++		if (sd_bus_error_has_name(&error, SD_BUS_SYSTEMD_NO_SUCH_UNIT_ERROR) ||
++		    sd_bus_error_has_name(&error, SD_BUS_DBUS_SERVICE_UNKNOWN_ERROR))
++			log_debug_dbus("%s: %s", _dbus_notification_failed_msg, error.message);
++		else
++			log_warn("WARNING: %s: %s", _dbus_notification_failed_msg, error.message);
+ 		goto out;
+ 	}
+ 
