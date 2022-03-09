@@ -1,0 +1,35 @@
+diff --git a/conf/example.conf.in b/conf/example.conf.in
+index a29caf3..6a18999 100644
+--- a/conf/example.conf.in
++++ b/conf/example.conf.in
+@@ -164,7 +164,11 @@ devices {
+ 	# The syntax is the same as devices/filter. Devices rejected by
+ 	# global_filter are not opened by LVM.
+ 	# This configuration option has an automatic default value.
+-	# global_filter = [ "a|.*|" ]
++	# global_filter = [ "a|^/dev/disk/by-id/dm-uuid-CRYPT-LUKS[12]-.*|",
++	#                   "a|^/dev/nvme.*|",
++	#                   "a|^/dev/sd.*|",
++	#                   "a|^/dev/md.*|",
++	#                   "r|.*|" ]
+ 
+ 	# Configuration option devices/types.
+ 	# List of additional acceptable block device types.
+diff --git a/lib/config/config_settings.h b/lib/config/config_settings.h
+index f280156..6911eab 100644
+--- a/lib/config/config_settings.h
++++ b/lib/config/config_settings.h
+@@ -317,7 +317,12 @@ cfg_array(devices_filter_CFG, "filter", devices_CFG_SECTION, CFG_DEFAULT_COMMENT
+ 	"filter = [ \"a|^/dev/hda8$|\", \"r|.*|\" ]\n"
+ 	"#\n")
+ 
+-cfg_array(devices_global_filter_CFG, "global_filter", devices_CFG_SECTION, CFG_DEFAULT_COMMENTED, CFG_TYPE_STRING, "#Sa|.*|", vsn(2, 2, 98), NULL, 0, NULL,
++cfg_array(devices_global_filter_CFG, "global_filter", devices_CFG_SECTION, CFG_DEFAULT_COMMENTED, CFG_TYPE_STRING,
++    "#Sa|^/dev/disk/by-id/dm-uuid-CRYPT-LUKS[12]-.*|"
++    "#Sa|^/dev/nvme.*|"
++    "#Sa|^/dev/sd.*|"
++    "#Sa|^/dev/md.*|"
++    "#Sr|.*|", vsn(2, 2, 98), NULL, 0, NULL,
+ 	"Limit the block devices that are used by LVM system components.\n"
+ 	"Because devices/filter may be overridden from the command line, it is\n"
+ 	"not suitable for system-wide device filtering, e.g. udev.\n"
