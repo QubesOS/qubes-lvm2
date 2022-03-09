@@ -1,0 +1,28 @@
+Use find_config_tree_array for accessing arrays
+
+Continuation of 3b6840e0997dd4df0ea711c2036871e3cc2fe40a.
+find_config_tree_node does not consider built-in default value, while
+find_config_tree_array does.
+
+diff --git a/lib/commands/toolcontext.c b/lib/commands/toolcontext.c
+index 479d499..7c199dd 100644
+--- a/lib/commands/toolcontext.c
++++ b/lib/commands/toolcontext.c
+@@ -1099,7 +1099,7 @@ static struct dev_filter *_init_filter_chain(struct cmd_context *cmd)
+ 	nr_filt++;
+ 
+ 	/* global regex filter. Optional. */
+-	if ((cn = find_config_tree_node(cmd, devices_global_filter_CFG, NULL))) {
++	if ((cn = find_config_tree_array(cmd, devices_global_filter_CFG, NULL))) {
+ 		if (!(filters[nr_filt] = regex_filter_create(cn->v))) {
+ 			log_error("Failed to create global regex device filter");
+ 			goto bad;
+@@ -1108,7 +1108,7 @@ static struct dev_filter *_init_filter_chain(struct cmd_context *cmd)
+ 
+ 	/* regex filter. Optional. */
+ 	if (!lvmetad_used()) {
+-		if ((cn = find_config_tree_node(cmd, devices_filter_CFG, NULL))) {
++		if ((cn = find_config_tree_array(cmd, devices_filter_CFG, NULL))) {
+ 			if (!(filters[nr_filt] = regex_filter_create(cn->v))) {
+ 				log_error("Failed to create regex device filter");
+ 				goto bad;

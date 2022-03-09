@@ -63,6 +63,7 @@ Patch1: lvm2-lvmetad-timeout.patch
 Patch2: lvm2-2_02_168-only-log-msg-as-debug-if-lvm2-dbusd-unit-missing-for-d-bus-notification.patch
 Patch3: lvm2-2_02_169-fix-segfault-in-lvmetad-from-missing-null-in-daemon_reply_simple.patch
 Patch4: lvm2-2_02_168-always-exit-dmsetup-with-success-when-asked-to-display-help-and-version.patch
+Patch5: lvm2-use-find_config_tree_array.patch
 
 BuildRequires: libselinux-devel >= %{libselinux_version}, libsepol-devel
 BuildRequires: libblkid-devel >= %{util_linux_version}
@@ -121,6 +122,7 @@ or more physical volumes and creating one or more logical volumes
 %patch2 -p1 -b .lvmdbus_msg
 %patch3 -p1 -b .lvmetad_segfault
 %patch4 -p1 -b .dmsetup_exit_code
+%patch5 -p1 -b .find_config_tree_array
 
 %build
 %global _default_pid_dir /run
