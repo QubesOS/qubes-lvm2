@@ -98,7 +98,7 @@ BuildRequires: device-mapper-persistent-data >= %{persistent_data_version}
 %if %{enable_lockd_sanlock}
 BuildRequires: sanlock-devel >= %{sanlock_version}
 %endif
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name}-libs = %{epoch}:%{version}-%{release}
 %if 0%{?fedora}
 Requires: system-release >= %{system_release_version}
 %endif
@@ -409,9 +409,9 @@ systemctl start lvm2-lvmpolld.socket
 Summary: Development libraries and headers
 Group: Development/Libraries
 License: LGPLv2
-Requires: %{name} = %{version}-%{release}
-Requires: device-mapper-devel = %{device_mapper_version}-%{release}
-Requires: device-mapper-event-devel = %{device_mapper_version}-%{release}
+Requires: %{name} = %{epoch}:%{version}-%{release}
+Requires: device-mapper-devel = %{epoch}:%{device_mapper_version}-%{release}
+Requires: device-mapper-event-devel = %{epoch}:%{device_mapper_version}-%{release}
 Requires: pkgconfig
 
 %description devel
@@ -431,7 +431,7 @@ the lvm2 libraries.
 Summary: Shared libraries for lvm2
 License: LGPLv2
 Group: System Environment/Libraries
-Requires: device-mapper-event = %{device_mapper_version}-%{release}
+Requires: device-mapper-event = %{epoch}:%{device_mapper_version}-%{release}
 
 %description libs
 This package contains shared lvm2 libraries for applications.
@@ -466,9 +466,9 @@ This package contains shared lvm2 libraries for applications.
 Summary: Python module to access LVM
 License: LGPLv2
 Group: Development/Libraries
-Provides: python-lvm = %{version}-%{release}
+Provides: python-lvm = %{epoch}:%{version}-%{release}
 Obsoletes: python-lvm < 2.02.98-2
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name}-libs = %{epoch}:%{version}-%{release}
 
 %description python-libs
 Python module to allow the creation and use of LVM
@@ -481,9 +481,9 @@ logical volumes, physical volumes, and volume groups.
 Summary: Python 3 module to access LVM
 License: LGPLv2
 Group: Development/Libraries
-Provides: python3-lvm = %{version}-%{release}
+Provides: python3-lvm = %{epoch}:%{version}-%{release}
 Obsoletes: python-lvm < 2.02.98-2
-Requires: %{name}-libs = %{version}-%{release}
+Requires: %{name}-libs = %{epoch}:%{version}-%{release}
 
 %description python3-libs
 Python 3 module to allow the creation and use of LVM
@@ -502,7 +502,7 @@ logical volumes, physical volumes, and volume groups.
 %package lockd
 Summary: LVM locking daemon
 Group: System Environment/Base
-Requires: lvm2 = %{version}-%{release}
+Requires: lvm2 = %{epoch}:%{version}-%{release}
 %if %{enable_lockd_sanlock}
 Requires: sanlock-lib >= %{sanlock_version}
 %endif
@@ -547,7 +547,7 @@ LVM commands use lvmlockd to coordinate access to shared storage.
 Summary: Cluster extensions for userland logical volume management tools
 License: GPLv2
 Group: System Environment/Base
-Requires: lvm2 = %{version}-%{release}
+Requires: lvm2 = %{epoch}:%{version}-%{release}
 Requires(preun): device-mapper >= %{device_mapper_version}
 Requires(preun): lvm2 >= 2.02
 Requires: corosync >= %{corosync_version}
@@ -580,7 +580,7 @@ fi
 Summary: Additional files to support clustered LVM2 in standalone mode
 License: GPLv2
 Group: System Environment/Base
-Requires: lvm2-cluster = %{version}-%{release}
+Requires: lvm2-cluster = %{epoch}:%{version}-%{release}
 
 %description cluster-standalone
 
@@ -617,7 +617,7 @@ involvement (e.g. pacemaker).
 Summary: Daemon for device-mapper-based clustered mirrors
 Group: System Environment/Base
 Requires: corosync >= %{corosync_version}
-Requires: device-mapper = %{device_mapper_version}-%{release}
+Requires: device-mapper = %{epoch}:%{device_mapper_version}-%{release}
 Requires: resource-agents >= %{resource_agents_version}
 
 %description -n cmirror
@@ -635,7 +635,7 @@ Daemon providing device-mapper-based mirrors in a shared-storage cluster.
 Summary: Additional files to support device-mapper-based clustered mirrors in standalone mode
 License: GPLv2
 Group: System Environment/Base
-Requires: cmirror >= %{version}-%{release}
+Requires: cmirror >= %{epoch}:%{version}-%{release}
 
 %description -n cmirror-standalone
 
@@ -668,7 +668,7 @@ involvement (e.g. pacemaker).
 Summary: LVM2 D-Bus daemon
 License: GPLv2
 Group: System Environment/Base
-Requires: lvm2 >= %{version}-%{release}
+Requires: lvm2 >= %{epoch}:%{version}-%{release}
 Requires: dbus
 Requires: python3-dbus
 Requires: python3-pyudev
@@ -711,7 +711,7 @@ Version: %{device_mapper_version}
 License: GPLv2
 Group: System Environment/Base
 URL: http://sources.redhat.com/dm
-Requires: device-mapper-libs = %{device_mapper_version}-%{release}
+Requires: device-mapper-libs = %{epoch}:%{device_mapper_version}-%{release}
 Requires: util-linux >= %{util_linux_version}
 Requires: systemd >= %{systemd_version}
 # We need dracut to install required udev rules if udev_sync
@@ -744,7 +744,7 @@ Summary: Development libraries and headers for device-mapper
 Version: %{device_mapper_version}
 License: LGPLv2
 Group: Development/Libraries
-Requires: device-mapper = %{device_mapper_version}-%{release}
+Requires: device-mapper = %{epoch}:%{device_mapper_version}-%{release}
 Requires: pkgconfig
 
 %description -n device-mapper-devel
@@ -762,7 +762,7 @@ Summary: Device-mapper shared library
 Version: %{device_mapper_version}
 License: LGPLv2
 Group: System Environment/Libraries
-Requires: device-mapper = %{device_mapper_version}-%{release}
+Requires: device-mapper = %{epoch}:%{device_mapper_version}-%{release}
 
 %description -n device-mapper-libs
 This package contains the device-mapper shared library, libdevmapper.
@@ -781,8 +781,8 @@ This package contains the device-mapper shared library, libdevmapper.
 Summary: Device-mapper event daemon
 Group: System Environment/Base
 Version: %{device_mapper_version}
-Requires: device-mapper = %{device_mapper_version}-%{release}
-Requires: device-mapper-event-libs = %{device_mapper_version}-%{release}
+Requires: device-mapper = %{epoch}:%{device_mapper_version}-%{release}
+Requires: device-mapper-event-libs = %{epoch}:%{device_mapper_version}-%{release}
 Requires(post): systemd-units
 Requires(preun): systemd-units
 Requires(postun): systemd-units
@@ -837,7 +837,7 @@ Summary: Development libraries and headers for the device-mapper event daemon
 Version: %{device_mapper_version}
 License: LGPLv2
 Group: Development/Libraries
-Requires: device-mapper-event = %{device_mapper_version}-%{release}
+Requires: device-mapper-event = %{epoch}:%{device_mapper_version}-%{release}
 Requires: pkgconfig
 
 %description -n device-mapper-event-devel
