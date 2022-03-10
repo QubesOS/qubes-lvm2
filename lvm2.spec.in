@@ -54,6 +54,7 @@ Name: lvm2
 
 Version: @VERSION@
 Release: @REL@%{?dist}
+Epoch: 1
 License: GPLv2
 Group: System Environment/Base
 URL: http://sources.redhat.com/lvm2
