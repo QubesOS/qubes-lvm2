@@ -10,6 +10,8 @@
 %global enable_python 1
 %global enable_thin 1
 
+%global __python %{__python2}
+
 %global system_release_version 23
 %global systemd_version 189-3
 %global dracut_version 002-18
