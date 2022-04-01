@@ -62,6 +62,12 @@ Source0: ftp://sourceware.org/pub/lvm2/releases/LVM2.%{version}.tgz
 Patch0: lvm2-set-default-preferred_names.patch
 Patch1: lvm2-use-find_config_tree_array.patch
 Patch2: lvm2-set-default-global_filter.patch
+Patch3: 0001-dmsetup-splitname-udevflags-check-for-stdout-errors.patch
+Patch4: 0002-Disable-lvm2-udev-rules-if-dmsetup-splitname-fails.patch
+Patch5: 0003-Disable-udev-rules-if-udev-flags-can-t-be-obtained.patch
+Patch6: 0004-Drop-support-for-very-old-kernels.patch
+Patch7: 0005-Allow-overprovisioning-check-to-be-disabled.patch
+Patch8: 0006-Do-not-write-to-already-errored-stream.patch
 
 BuildRequires: gcc
 %if %{enable_testsuite}

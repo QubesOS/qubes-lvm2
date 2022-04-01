@@ -1,0 +1,32 @@
+From 2b9c38a4c2497b5b37bba3fd6f49c9ae270fd021 Mon Sep 17 00:00:00 2001
+Message-Id: <24ee88f9dddc407c56de1971753b05ff18f0b3b5.1666072612.git.demi@invisiblethingslab.com>
+In-Reply-To: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+References: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+Date: Fri, 1 Apr 2022 18:15:18 -0400
+Subject: [PATCH 3/6] Disable udev rules if udev flags can't be obtained
+
+In this cased the safest option is to disable most device-mapper udev
+rules.  This can only happen if `dmsetup udevflags` fails.
+---
+ udev/10-dm.rules.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/udev/10-dm.rules.in b/udev/10-dm.rules.in
+index b4fa52ab766effb04fc198fd52e6181ad5758eef..9fae8df95d1f2f36a4f7a4d92201e88f11aa6120 100644
+--- a/udev/10-dm.rules.in
++++ b/udev/10-dm.rules.in
+@@ -50,7 +50,7 @@ ACTION!="add|change", GOTO="dm_end"
+ # These flags are encoded in DM_COOKIE variable that was introduced in
+ # kernel version 2.6.31. Therefore, we can use this feature with
+ # kernels >= 2.6.31 only. Cookie is not decoded for remove event.
+-ENV{DM_COOKIE}=="?*", IMPORT{program}="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}"
++ENV{DM_COOKIE}=="?*", IMPORT{program}!="(DM_EXEC)/dmsetup udevflags $env{DM_COOKIE}", GOTO="dm_disable"
+ 
+ # Rule out easy-to-detect inappropriate events first.
+ ENV{DISK_RO}=="1", GOTO="dm_disable"
+-- 
+Sincerely,
+Demi Marie Obenour (she/her/hers)
+Invisible Things Lab
+

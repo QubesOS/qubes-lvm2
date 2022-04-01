@@ -1,0 +1,51 @@
+From b5e22596184664f811e359700a8248d56220385c Mon Sep 17 00:00:00 2001
+Message-Id: <f13ec12b59ba006ae177b0d9e041d908293792fa.1666072612.git.demi@invisiblethingslab.com>
+In-Reply-To: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+References: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+Date: Tue, 18 Oct 2022 00:43:30 -0400
+Subject: [PATCH 6/6] Do not write to already errored stream
+
+If a stream has errored, writing further to it will just corrupt it.
+This ensures that e.g. errors writing JSON output will cause invalid
+JSON to be written.
+---
+ libdm/libdm-common.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/libdm/libdm-common.c b/libdm/libdm-common.c
+index d75c7046c811e3b755a00a667c09c7758ef22b1e..d02b753129c883b701d34849012edfe8c321db0d 100644
+--- a/libdm/libdm-common.c
++++ b/libdm/libdm-common.c
+@@ -122,18 +122,24 @@ static void _default_log_line(int level, const char *file,
+ 		if (level < _LOG_WARN)
+ 			out = stderr;
+ 
++		if (ferror(out))
++			goto io_error;
++
+ 		if (_debug_with_line_numbers < 0)
+ 			/* Set when env DM_DEBUG_WITH_LINE_NUMBERS is not "0" */
+ 			_debug_with_line_numbers =
+ 				strcmp(getenv("DM_DEBUG_WITH_LINE_NUMBERS") ? : "0", "0");
+ 
+ 		if (_debug_with_line_numbers)
+-			fprintf(out, "%s:%d     ", file, line);
++			if (fprintf(out, "%s:%d     ", file, line) < 0)
++				goto io_error;
+ 
+-		vfprintf(out, f, ap);
++		if (vfprintf(out, f, ap) < 0)
++			goto io_error;
+ 		fputc('\n', out);
+ 	}
+ 
++io_error:
+ 	if (_abort_on_internal_errors < 0)
+ 		/* Set when env DM_ABORT_ON_INTERNAL_ERRORS is not "0" */
+ 		_abort_on_internal_errors =
+-- 
+Sincerely,
+Demi Marie Obenour (she/her/hers)
+Invisible Things Lab
+

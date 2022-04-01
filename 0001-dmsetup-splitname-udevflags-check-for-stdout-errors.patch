@@ -1,0 +1,36 @@
+From fefc8d8bef4d6366d8df8d54e65925201035981b Mon Sep 17 00:00:00 2001
+Message-Id: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+Date: Fri, 1 Apr 2022 17:52:44 -0400
+Subject: [PATCH 1/6] dmsetup [splitname|udevflags]: check for stdout errors
+
+If there is an I/O error on stdout, return a non-zero status so that
+udev can avoid trusting the values printed.  Deeper changes to the
+log code are out of scope for this patch.
+---
+ libdm/dm-tools/dmsetup.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/libdm/dm-tools/dmsetup.c b/libdm/dm-tools/dmsetup.c
+index d01b8f2e8ef3038eac2337636d27a17bb47b9d76..5828ea7057d64d74286780467c708120aa191bb5 100644
+--- a/libdm/dm-tools/dmsetup.c
++++ b/libdm/dm-tools/dmsetup.c
+@@ -7471,6 +7471,13 @@ doit:
+ 					goto_out;
+ 				}
+ 			}
++
++			if ((!strcmp(cmd->name, "splitname") || !strcmp(cmd->name, "udevflags")) &&
++			    (fflush(stdout) || ferror(stdout))) {
++				log_error("Error writing to stdout");
++				ret = 1;
++				goto_out;
++			}
+ 		}
+ 
+ 		if (!r) {
+-- 
+Sincerely,
+Demi Marie Obenour (she/her/hers)
+Invisible Things Lab
+
