@@ -1,0 +1,27 @@
+From f57963dadf5d7640c226474338f3c018db8da093 Mon Sep 17 00:00:00 2001
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+Date: Fri, 1 Apr 2022 17:52:44 -0400
+Subject: [PATCH 1/5] dmsetup: return non-zero on stdio I/O error
+
+If there is an I/O error on stdout, return a non-zero status so that
+udev can avoid trusting the values printed.  Deeper changes to the
+log code are out of scope for this patch.
+---
+ libdm/dm-tools/dmsetup.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/libdm/dm-tools/dmsetup.c b/libdm/dm-tools/dmsetup.c
+index d01b8f2e8ef3038eac2337636d27a17bb47b9d76..0449e40911b748a164eeae03d8eaa535f718fc49 100644
+--- a/libdm/dm-tools/dmsetup.c
++++ b/libdm/dm-tools/dmsetup.c
+@@ -7491,5 +7491,7 @@ out:
+ 	if (_initial_timestamp)
+ 		dm_timestamp_destroy(_initial_timestamp);
+ 
++        if (fflush(stdout) || ferror(stdout))
++            return 1;
+ 	return (_switches[HELP_ARG] || _switches[VERSION_ARG]) ? 0 : ret;
+ }
+-- 
+2.35.3
+

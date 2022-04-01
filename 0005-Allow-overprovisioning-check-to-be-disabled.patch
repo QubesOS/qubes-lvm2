@@ -1,0 +1,28 @@
+From 794280cf8c42a4f7349e25b75045c12e13cb10b3 Mon Sep 17 00:00:00 2001
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+Date: Fri, 1 Apr 2022 18:42:19 -0400
+Subject: [PATCH 5/5] Allow overprovisioning check to be disabled
+
+It causes problems for Qubes OS, which handles this in other ways.
+---
+ lib/metadata/thin_manip.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/lib/metadata/thin_manip.c b/lib/metadata/thin_manip.c
+index 0704f2bc36f91f2348fc264a9b309c17d3561184..cb1398cf6e99b189866453679c4c478576201bf1 100644
+--- a/lib/metadata/thin_manip.c
++++ b/lib/metadata/thin_manip.c
+@@ -307,6 +307,10 @@ int pool_check_overprovisioning(const struct logical_volume *lv)
+ 	int percent, min_percent = 100;
+ 	int more_pools = 0;
+ 
++	/* Check if user has disabled overprovisioning warnings */
++	if (getenv("LVM_NO_OVERPROVISIONING_CHECK"))
++		return;
++
+ 	/* When passed thin volume, check related pool first */
+ 	if (lv_is_thin_volume(lv))
+ 		pool_lv = first_seg(lv)->pool_lv;
+-- 
+2.35.3
+
