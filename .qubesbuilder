@@ -1,6 +1,6 @@
 host:
   rpm:
-    spec:
+    build:
     - lvm2.spec
 source:
   files:
