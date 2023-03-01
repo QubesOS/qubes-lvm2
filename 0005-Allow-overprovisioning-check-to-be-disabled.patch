@@ -1,0 +1,36 @@
+From de95b3a8192a18f1f8330fe2bb40054c4988a886 Mon Sep 17 00:00:00 2001
+Message-Id: <ffacf430755fe39052937234de79fe7ca1b2ff52.1666072612.git.demi@invisiblethingslab.com>
+In-Reply-To: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+References: <9d96ef018178fb73bc4a4aba121d49e453cc9796.1666072612.git.demi@invisiblethingslab.com>
+From: Demi Marie Obenour <demi@invisiblethingslab.com>
+Date: Fri, 1 Apr 2022 18:42:19 -0400
+Subject: [PATCH 5/6] Allow overprovisioning check to be disabled
+
+This check causes problems for Qubes OS.  Qubes OS treats lvm writing
+anything to stderr as an error, but the overprovisioning message is
+printed anyway, so Qubes OS must explicitly check for it.  It is simpler
+to just not produce the message in the first place.
+---
+ lib/metadata/thin_manip.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/lib/metadata/thin_manip.c b/lib/metadata/thin_manip.c
+index 0704f2bc36f91f2348fc264a9b309c17d3561184..7f79fc01e49b25aad089033295f59db7c194fc01 100644
+--- a/lib/metadata/thin_manip.c
++++ b/lib/metadata/thin_manip.c
+@@ -307,6 +307,10 @@ int pool_check_overprovisioning(const struct logical_volume *lv)
+ 	int percent, min_percent = 100;
+ 	int more_pools = 0;
+ 
++	/* Check if user has disabled overprovisioning warnings */
++	if (getenv("LVM_NO_OVERPROVISIONING_CHECK"))
++		return 1;
++
+ 	/* When passed thin volume, check related pool first */
+ 	if (lv_is_thin_volume(lv))
+ 		pool_lv = first_seg(lv)->pool_lv;
+-- 
+Sincerely,
+Demi Marie Obenour (she/her/hers)
+Invisible Things Lab
+
