@@ -4,7 +4,8 @@ host:
     - lvm2.spec
 source:
   files:
-  - url: https://sourceware.org/pub/lvm2/LVM2.2.03.09.tgz
-    signature: https://sourceware.org/pub/lvm2/LVM2.2.03.09.tgz.asc
-    pubkeys:
-    - mcsontos-key.asc
+  - url: https://sourceware.org/pub/lvm2/LVM2.@VERSION@.tgz
+#    signature: https://sourceware.org/pub/lvm2/LVM2.@VERSION@.tgz.asc
+#    pubkeys:
+#    - mcsontos-key.asc
+    sha512: LVM2.@VERSION@.tgz.sha512
