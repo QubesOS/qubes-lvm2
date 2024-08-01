@@ -1,0 +1,25 @@
+From fdfd76a3ff1e2863fa11e79217bd2a4fa7ff527e Mon Sep 17 00:00:00 2001
+From: Ranjith ML <rmadhuso@redhat.com>
+Date: Wed, 24 Jan 2024 14:05:24 +0100
+Subject: [PATCH 3/3] archiving: Fix doubled filename in vgcfgrestore
+
+---
+ lib/format_text/archive.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/format_text/archive.c b/lib/format_text/archive.c
+index 5acf0c04a..0e848cc8f 100644
+--- a/lib/format_text/archive.c
++++ b/lib/format_text/archive.c
+@@ -313,7 +313,7 @@ static void _display_archive(struct cmd_context *cmd, const char *dir, struct ar
+ 	}
+ 
+ 	log_print(" ");
+-	log_print("File:\t\t%s/%s", path, af->name);
++	log_print("File:\t\t%s", path);
+ 	tc.path_live = path;
+ 
+ 	fic.type = FMT_INSTANCE_PRIVATE_MDAS;
+-- 
+2.43.0
+

@@ -9,12 +9,12 @@ index 479d499..7c199dd 100644
 --- a/lib/commands/toolcontext.c
 +++ b/lib/commands/toolcontext.c
 @@ -1099,7 +1099,7 @@ static struct dev_filter *_init_filter_chain(struct cmd_context *cmd)
- 	nr_filt++;
+ 	 */
  
  	/* global regex filter. Optional. */
 -	if ((cn = find_config_tree_node(cmd, devices_global_filter_CFG, NULL))) {
 +	if ((cn = find_config_tree_array(cmd, devices_global_filter_CFG, NULL))) {
- 		if (!(filters[nr_filt] = regex_filter_create(cn->v))) {
+ 		if (!(filters[nr_filt] = regex_filter_create(cn->v, 0, 1))) {
  			log_error("Failed to create global regex device filter");
  			goto bad;
 @@ -1108,7 +1108,7 @@ static struct dev_filter *_init_filter_chain(struct cmd_context *cmd)
@@ -23,6 +23,6 @@ index 479d499..7c199dd 100644
  	/* regex filter. Optional. */
 -	if ((cn = find_config_tree_node(cmd, devices_filter_CFG, NULL))) {
 +	if ((cn = find_config_tree_array(cmd, devices_filter_CFG, NULL))) {
- 		if (!(filters[nr_filt] = regex_filter_create(cn->v))) {
+ 		if (!(filters[nr_filt] = regex_filter_create(cn->v, 1, 0))) {
  			log_error("Failed to create regex device filter");
  			goto bad;

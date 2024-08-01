@@ -1,8 +1,6 @@
-%global device_mapper_version 1.02.171
+%global device_mapper_version 1.02.197
 
 %global enable_cache 1
-%global enable_cluster 1
-%global enable_cmirror 1
 %global enable_lvmdbusd 1
 %global enable_lvmlockd 1
 %global enable_lvmpolld 1
@@ -11,9 +9,10 @@
 %global enable_testsuite 1
 %global enable_vdo 1
 %global enable_writecache 1
+%global enable_integrity 1
 
 %global system_release_version 23
-%global systemd_version 189-3
+%global systemd_version 247-1
 %global dracut_version 002-18
 %global util_linux_version 2.24
 %global bash_version 4.0
@@ -29,8 +28,6 @@
 
 %if 0%{?rhel} && 0%{?rhel} <= 8
   %ifnarch i686 x86_64 ppc64le s390x
-    %global enable_cluster 0
-    %global enable_cmirror 0
     %global enable_lockd_dlm 0
   %endif
 
@@ -39,17 +36,11 @@
   %endif
 %endif
 
-%if %{enable_cluster}
-  %global configure_cluster --with-cluster=internal
-  %if %{enable_cmirror}
-    %global configure_cmirror --enable-cmirrord
-  %endif
-%else
-    %global configure_cluster --with-cluster=internal
-%endif
-
 # Do not reset Release to 1 unless both lvm2 and device-mapper
 # versions are increased together.
+#
+# NOTE: At the moment it is better to increase DM version together with lvm.
+# This siplifies life for other packagers as well.
 
 Summary: Userland logical volume management tools
 Name: lvm2
@@ -57,18 +48,21 @@ Epoch: 1
 Version: @VERSION@
 Release: @REL@%{?dist}
 License: GPLv2
-URL: http://sourceware.org/lvm2
-Source0: ftp://sourceware.org/pub/lvm2/releases/LVM2.%{version}.tgz
-Patch0: lvm2-set-default-preferred_names.patch
-Patch1: lvm2-use-find_config_tree_array.patch
-Patch2: lvm2-set-default-global_filter.patch
-Patch3: 0001-dmsetup-splitname-udevflags-check-for-stdout-errors.patch
-Patch4: 0002-Disable-lvm2-udev-rules-if-dmsetup-splitname-fails.patch
-Patch5: 0003-Disable-udev-rules-if-udev-flags-can-t-be-obtained.patch
-Patch6: 0004-Drop-support-for-very-old-kernels.patch
-Patch7: 0005-Allow-overprovisioning-check-to-be-disabled.patch
-Patch8: 0006-Do-not-write-to-already-errored-stream.patch
+URL: https://sourceware.org/lvm2
+Source0: https://sourceware.org/pub/lvm2/releases/LVM2.%{version}.tgz
+Patch0: 0001-spec-Install-and-package-etc-lvm-devices.patch
+Patch1: 0002-man-add-inte-g-rity-to-man-lvs.patch
+Patch2: 0003-archiving-Fix-doubled-filename-in-vgcfgrestore.patch
+Patch3: lvm2-use-find_config_tree_array.patch
+Patch4: lvm2-set-default-global_filter.patch
+Patch5: 0001-dmsetup-splitname-udevflags-check-for-stdout-errors.patch
+Patch6: 0002-Disable-lvm2-udev-rules-if-dmsetup-splitname-fails.patch
+Patch7: 0003-Disable-udev-rules-if-udev-flags-can-t-be-obtained.patch
+Patch8: 0004-Drop-support-for-very-old-kernels.patch
+Patch9: 0005-Allow-overprovisioning-check-to-be-disabled.patch
+Patch10: 0006-Do-not-write-to-already-errored-stream.patch
 
+BuildRequires: make
 BuildRequires: gcc
 %if %{enable_testsuite}
 BuildRequires: gcc-c++
@@ -76,12 +70,9 @@ BuildRequires: gcc-c++
 BuildRequires: libselinux-devel >= %{libselinux_version}, libsepol-devel
 BuildRequires: libblkid-devel >= %{util_linux_version}
 BuildRequires: ncurses-devel
-BuildRequires: compat-readline5-devel
+BuildRequires: libedit-devel
 BuildRequires: libaio-devel
-%if %{enable_cluster}
-BuildRequires: corosynclib-devel >= %{corosync_version}
-%endif
-%if %{enable_cluster} || %{enable_lockd_dlm}
+%if %{enable_lockd_dlm}
 BuildRequires: dlm-devel >= %{dlm_version}
 %endif
 BuildRequires: module-init-tools
@@ -102,7 +93,7 @@ BuildRequires: sanlock-devel >= %{sanlock_version}
 %endif
 Requires: %{name}-libs = %{?epoch}:%{version}-%{release}
 %if 0%{?fedora}
-Requires: system-release >= %{system_release_version}
+Requires(post): (system-release >= %{system_release_version} if system-release)
 %endif
 Requires: bash >= %{bash_version}
 Requires(post): systemd-units >= %{systemd_version}, systemd-sysv
@@ -122,10 +113,7 @@ or more physical volumes and creating one or more logical volumes
 (kind of logical partitions) in volume groups.
 
 %prep
-%setup -q -n LVM2.%{version}
-%patch0 -p1 -b .preferred_names
-%patch1 -p1 -b .find_config_tree_array
-%patch2 -p1 -b .global_filter
+%autosetup -p1 -n LVM2.%{version}
 
 %build
 %global _default_pid_dir /run
@@ -135,61 +123,71 @@ or more physical volumes and creating one or more logical volumes
 
 %global _udevdir %{_prefix}/lib/udev/rules.d
 
-%global configure_udev --with-udevdir=%{_udevdir} --enable-udev_sync
-
-%if %{enable_cache}
-%global configure_cache --with-cache=internal
-%endif
-
+%configure \
+  --with-default-dm-run-dir=%{_default_dm_run_dir} \
+  --with-default-run-dir=%{_default_run_dir} \
+  --with-default-pid-dir=%{_default_pid_dir} \
+  --with-default-locking-dir=%{_default_locking_dir} \
+  --with-usrlibdir=%{_libdir} \
+  --enable-fsadm \
+  --enable-write_install \
+  --with-user= \
+  --with-group= \
+  --with-device-uid=0 \
+  --with-device-gid=6 \
+  --with-device-mode=0660 \
+  --enable-pkgconfig \
+  --enable-cmdlib \
+  --enable-dmeventd \
+  --enable-blkid_wiping \
+  --with-udevdir=%{_udevdir} --enable-udev_sync \
 %if %{enable_thin}
-%global configure_thin --with-thin=internal
+  --with-thin=internal \
 %endif
-
+%if %{enable_cache}
+  --with-cache=internal \
+%endif
+%if %{enable_lvmpolld}
+  --enable-lvmpolld \
+%endif
 %if %{enable_lockd_dlm}
-%global configure_lockd_dlm --enable-lvmlockd-dlm --enable-lvmlockd-dlmcontrol
+  --enable-lvmlockd-dlm --enable-lvmlockd-dlmcontrol \
 %endif
 %if %{enable_lockd_sanlock}
-%global configure_lockd_sanlock --enable-lvmlockd-sanlock
+  --enable-lvmlockd-sanlock \
 %endif
-
-%if %{enable_lvmpolld}
-%global configure_lvmpolld --enable-lvmpolld
-%endif
-
 %if %{enable_lvmdbusd}
-%global configure_lvmdbusd --enable-dbus-service --enable-notify-dbus
+  --enable-dbus-service --enable-notify-dbus \
 %endif
-
 %if %{enable_dmfilemapd}
-%global configure_dmfilemapd --enable-dmfilemapd
+  --enable-dmfilemapd \
 %endif
-
-%if %{enable_vdo}
-%global configure_vdo --with-vdo=internal --with-vdo-format=%{_bindir}/vdoformat
-%endif
-
 %if %{enable_writecache}
-%global configure_writecache --with-writecache=internal
+  --with-writecache=internal \
 %endif
+%if %{enable_vdo}
+  --with-vdo=internal --with-vdo-format=%{_bindir}/vdoformat \
+%endif
+%if %{enable_integrity}
+  --with-integrity=internal \
+%endif
+  --with-default-use-devices-file=1 \
+  --disable-silent-rules \
+  --enable-app-machineid \
+  --enable-editline \
+  --disable-readline
 
-# NOTE: Using CFLAGS and LDFLAGS would override the fedora default flags, thus
-# using paths here...
-export CPATH="%{_includedir}/readline5"
-export LIBRARY_PATH="%{_libdir}/readline5"
-export PYTHON="%{__python3}"
-
-%configure --with-default-dm-run-dir=%{_default_dm_run_dir} --with-default-run-dir=%{_default_run_dir} --with-default-pid-dir=%{_default_pid_dir} --with-default-locking-dir=%{_default_locking_dir} --with-usrlibdir=%{_libdir} --enable-fsadm --enable-write_install --with-user= --with-group= --with-device-uid=0 --with-device-gid=6 --with-device-mode=0660 --enable-pkgconfig --enable-cmdlib --enable-dmeventd --enable-blkid_wiping %{?configure_cluster} %{?configure_cmirror} %{?configure_udev} %{?configure_thin} %{?configure_cache} %{?configure_lvmpolld} %{?configure_lockd_dlm} %{?configure_lockd_sanlock} %{?configure_lvmdbusd} %{?configure_dmfilemapd} %{?configure_writecache} %{?configure_vdo} --disable-silent-rules
-
-make %{?_smp_mflags}
+V=1 %make_build
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT
-make install_system_dirs DESTDIR=$RPM_BUILD_ROOT
-make install_systemd_units DESTDIR=$RPM_BUILD_ROOT
-make install_systemd_generators DESTDIR=$RPM_BUILD_ROOT
-make install_tmpfiles_configuration DESTDIR=$RPM_BUILD_ROOT
+V=1 %make_install
+V=1 make install_system_dirs DESTDIR=$RPM_BUILD_ROOT
+V=1 make install_systemd_units DESTDIR=$RPM_BUILD_ROOT
+V=1 make install_systemd_generators DESTDIR=$RPM_BUILD_ROOT
+V=1 make install_tmpfiles_configuration DESTDIR=$RPM_BUILD_ROOT
+#install -d ${RPM_BUILD_ROOT}%{_sysconfdir}/lvm/devices
 %if %{enable_testsuite}
-make -C test install DESTDIR=$RPM_BUILD_ROOT
+%make_install -C test
 %endif
 
 %post
@@ -231,23 +229,22 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 /bin/systemctl try-restart lvm2-monitor.service > /dev/null 2>&1 || :
 
 %files
-%{!?_licensedir:%global license %%doc}
 %license COPYING COPYING.LIB
 %doc README VERSION WHATS_NEW
 %doc doc/lvm_fault_handling.txt
 
 # Main binaries
-%defattr(555,root,root,-)
 %{_sbindir}/fsadm
 %{_sbindir}/lvm
 %{_sbindir}/lvmconfig
+%{_sbindir}/lvmdevices
 %{_sbindir}/lvmdump
 %if %{enable_lvmpolld}
 %{_sbindir}/lvmpolld
 %endif
+%{_sbindir}/lvm_import_vdo
 
 # Other files
-%defattr(444,root,root,-)
 %{_sbindir}/lvchange
 %{_sbindir}/lvconvert
 %{_sbindir}/lvcreate
@@ -282,6 +279,7 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %{_sbindir}/vgextend
 %{_sbindir}/vgimport
 %{_sbindir}/vgimportclone
+%{_sbindir}/vgimportdevices
 %{_sbindir}/vgmerge
 %{_sbindir}/vgmknodes
 %{_sbindir}/vgreduce
@@ -290,7 +288,9 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %{_sbindir}/vgs
 %{_sbindir}/vgscan
 %{_sbindir}/vgsplit
+%attr(755, -, -) %{_libexecdir}/lvresize_fs_helper
 %{_mandir}/man5/lvm.conf.5.gz
+%{_mandir}/man7/lvmautoactivation.7.gz
 %{_mandir}/man7/lvmcache.7.gz
 %{_mandir}/man7/lvmraid.7.gz
 %{_mandir}/man7/lvmreport.7.gz
@@ -304,9 +304,9 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %{_mandir}/man8/lvdisplay.8.gz
 %{_mandir}/man8/lvextend.8.gz
 %{_mandir}/man8/lvm.8.gz
-%{_mandir}/man8/lvm2-activation-generator.8.gz
 %{_mandir}/man8/lvm-config.8.gz
 %{_mandir}/man8/lvmconfig.8.gz
+%{_mandir}/man8/lvmdevices.8.gz
 %{_mandir}/man8/lvm-dumpconfig.8.gz
 %{_mandir}/man8/lvmdiskscan.8.gz
 %{_mandir}/man8/lvmdump.8.gz
@@ -328,6 +328,7 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %{_mandir}/man8/pvresize.8.gz
 %{_mandir}/man8/pvs.8.gz
 %{_mandir}/man8/pvscan.8.gz
+%{_mandir}/man8/lvm_import_vdo.8.gz
 %{_mandir}/man8/vgcfgbackup.8.gz
 %{_mandir}/man8/vgcfgrestore.8.gz
 %{_mandir}/man8/vgchange.8.gz
@@ -339,6 +340,7 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %{_mandir}/man8/vgextend.8.gz
 %{_mandir}/man8/vgimport.8.gz
 %{_mandir}/man8/vgimportclone.8.gz
+%{_mandir}/man8/vgimportdevices.8.gz
 %{_mandir}/man8/vgmerge.8.gz
 %{_mandir}/man8/vgmknodes.8.gz
 %{_mandir}/man8/vgreduce.8.gz
@@ -348,15 +350,15 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %{_mandir}/man8/vgscan.8.gz
 %{_mandir}/man8/vgsplit.8.gz
 %{_udevdir}/11-dm-lvm.rules
-%{_udevdir}/69-dm-lvm-metad.rules
+%{_udevdir}/69-dm-lvm.rules
 %if %{enable_lvmpolld}
 %{_mandir}/man8/lvmpolld.8.gz
 %{_mandir}/man8/lvm-lvpoll.8.gz
 %endif
 %dir %{_sysconfdir}/lvm
 %ghost %{_sysconfdir}/lvm/cache/.cache
-%attr(644, -, -) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/lvm/lvm.conf
-%attr(644, -, -) %config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/lvm/lvmlocal.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/lvm/lvm.conf
+%config(noreplace) %verify(not md5 mtime size) %{_sysconfdir}/lvm/lvmlocal.conf
 %dir %{_sysconfdir}/lvm/profile
 %{_sysconfdir}/lvm/profile/command_profile_template.profile
 %{_sysconfdir}/lvm/profile/metadata_profile_template.profile
@@ -371,13 +373,13 @@ systemctl start lvm2-lvmpolld.socket >/dev/null 2>&1 || :
 %dir %{_sysconfdir}/lvm/backup
 %dir %{_sysconfdir}/lvm/cache
 %dir %{_sysconfdir}/lvm/archive
+%dir %{_sysconfdir}/lvm/devices
 %dir %{_default_locking_dir}
 %dir %{_default_run_dir}
 %{_tmpfilesdir}/%{name}.conf
 %{_unitdir}/blk-availability.service
 %{_unitdir}/lvm2-monitor.service
-%{_unitdir}/lvm2-pvscan@.service
-%attr(555, -, -) %{_prefix}/lib/systemd/system-generators/lvm2-activation-generator
+#%%{_unitdir}/lvm-vgchange@.service # vgchange is now part of udev rule
 %if %{enable_lvmpolld}
 %{_unitdir}/lvm2-lvmpolld.socket
 %{_unitdir}/lvm2-lvmpolld.service
@@ -399,7 +401,6 @@ This package contains files needed to develop applications that use
 the lvm2 libraries.
 
 %files devel
-%defattr(444,root,root,-)
 %{_libdir}/liblvm2cmd.so
 %{_libdir}/libdevmapper-event-lvm2.so
 %{_includedir}/lvm2cmd.h
@@ -415,9 +416,7 @@ This package contains shared lvm2 libraries for applications.
 %ldconfig_scriptlets libs
 
 %files libs
-%{!?_licensedir:%global license %%doc}
 %license COPYING.LIB
-%defattr(555,root,root,-)
 %{_libdir}/liblvm2cmd.so.*
 %{_libdir}/libdevmapper-event-lvm2.so.*
 %dir %{_libdir}/device-mapper
@@ -467,65 +466,13 @@ LVM commands use lvmlockd to coordinate access to shared storage.
 %systemd_postun lvmlockd.service lvmlocks.service
 
 %files lockd
-%defattr(444,root,root,-)
-%%attr(555, -, -) %{_sbindir}/lvmlockd
-%%attr(555, -, -) %{_sbindir}/lvmlockctl
+%{_sbindir}/lvmlockd
+%{_sbindir}/lvmlockctl
 %{_mandir}/man8/lvmlockd.8.gz
 %{_mandir}/man8/lvmlockctl.8.gz
 %{_unitdir}/lvmlockd.service
 %{_unitdir}/lvmlocks.service
 
-%endif
-
-###############################################################################
-# Cluster mirror subpackage
-# The 'clvm' OCF script to manage cmirrord instance is part of resource-agents.
-###############################################################################
-%if %{enable_cluster}
-%if %{enable_cmirror}
-
-%package -n cmirror
-Summary: Daemon for device-mapper-based clustered mirrors
-Requires: corosync >= %{corosync_version}
-Requires: device-mapper = %{?epoch}:%{device_mapper_version}-%{release}
-Requires: resource-agents >= %{resource_agents_version}
-
-%description -n cmirror
-Daemon providing device-mapper-based mirrors in a shared-storage cluster.
-
-%files -n cmirror
-%defattr(555,root,root,-)
-%{_sbindir}/cmirrord
-%attr(444, -, -) %{_mandir}/man8/cmirrord.8.gz
-
-##############################################################################
-# Cmirror-standalone subpackage
-##############################################################################
-%package -n cmirror-standalone
-Summary: Additional files to support device-mapper-based clustered mirrors in standalone mode
-License: GPLv2
-Requires: cmirror >= %{?epoch}:%{version}-%{release}
-
-%description -n cmirror-standalone
-
-Additional files needed to run daemon for device-mapper-based clustered
-mirrors in standalone mode as a service without cluster resource manager
-involvement (e.g. pacemaker).
-
-%post -n cmirror-standalone
-%systemd_post lvm2-cmirrord.service
-
-%preun -n cmirror-standalone
-%systemd_preun lvm2-cmirrord.service
-
-%postun -n cmirror-standalone
-%systemd_postun lvm2-cmirrord.service
-
-%files -n cmirror-standalone
-%defattr(444,root,root,-)
-%{_unitdir}/lvm2-cmirrord.service
-
-%endif
 %endif
 
 ##############################################################################
@@ -560,14 +507,12 @@ Daemon for access to LVM2 functionality through a D-Bus interface.
 %systemd_postun lvm2-lvmdbusd.service
 
 %files dbusd
-%defattr(555,root,root,-)
 %{_sbindir}/lvmdbusd
-%defattr(444,root,root,-)
 %{_sysconfdir}/dbus-1/system.d/com.redhat.lvmdbus1.conf
 %{_datadir}/dbus-1/system-services/com.redhat.lvmdbus1.service
 %{_mandir}/man8/lvmdbusd.8.gz
 %{_unitdir}/lvm2-lvmdbusd.service
-%{python3_sitelib}/lvmdbusd/*
+%{python3_sitelib}/lvmdbusd
 
 %endif
 
@@ -578,9 +523,9 @@ Daemon for access to LVM2 functionality through a D-Bus interface.
 Summary: Device mapper utility
 Version: %{device_mapper_version}
 License: GPLv2
-URL: http://sources.redhat.com/dm
+URL: https://www.sourceware.org/dm/
 Requires: device-mapper-libs = %{?epoch}:%{device_mapper_version}-%{release}
-Requires: util-linux >= %{util_linux_version}
+Requires: util-linux-core >= %{util_linux_version}
 Requires: systemd >= %{systemd_version}
 # We need dracut to install required udev rules if udev_sync
 # feature is turned on so we don't lose required notifications.
@@ -591,19 +536,17 @@ This package contains the supporting userspace utility, dmsetup,
 for the kernel device-mapper.
 
 %files -n device-mapper
-%{!?_licensedir:%global license %%doc}
 %license COPYING COPYING.LIB
 %doc WHATS_NEW_DM VERSION_DM README
 %doc udev/12-dm-permissions.rules
-%defattr(444,root,root,-)
-%attr(555, -, -) %{_sbindir}/dmsetup
-%attr(555, -, -) %{_sbindir}/blkdeactivate
-%attr(555, -, -) %{_sbindir}/dmstats
+%{_sbindir}/dmsetup
+%{_sbindir}/blkdeactivate
+%{_sbindir}/dmstats
 %{_mandir}/man8/dmsetup.8.gz
 %{_mandir}/man8/dmstats.8.gz
 %{_mandir}/man8/blkdeactivate.8.gz
 %if %{enable_dmfilemapd}
-%attr(555, -, -) %{_sbindir}/dmfilemapd
+%{_sbindir}/dmfilemapd
 %{_mandir}/man8/dmfilemapd.8.gz
 %endif
 %{_udevdir}/10-dm.rules
@@ -622,7 +565,6 @@ This package contains files needed to develop applications that use
 the device-mapper libraries.
 
 %files -n device-mapper-devel
-%defattr(444,root,root,-)
 %{_libdir}/libdevmapper.so
 %{_includedir}/libdevmapper.h
 %{_libdir}/pkgconfig/devmapper.pc
@@ -639,9 +581,7 @@ This package contains the device-mapper shared library, libdevmapper.
 %ldconfig_scriptlets -n device-mapper-libs
 
 %files -n device-mapper-libs
-%{!?_licensedir:%global license %%doc}
 %license COPYING COPYING.LIB
-%defattr(555,root,root,-)
 %{_libdir}/libdevmapper.so.*
 
 %package -n device-mapper-event
@@ -672,8 +612,7 @@ fi
 %systemd_preun dm-event.service dm-event.socket
 
 %files -n device-mapper-event
-%defattr(444,root,root,-)
-%attr(555, -, -) %{_sbindir}/dmeventd
+%{_sbindir}/dmeventd
 %{_mandir}/man8/dmeventd.8.gz
 %{_unitdir}/dm-event.socket
 %{_unitdir}/dm-event.service
@@ -690,9 +629,7 @@ libdevmapper-event.
 %ldconfig_scriptlets -n device-mapper-event-libs
 
 %files -n device-mapper-event-libs
-%{!?_licensedir:%global license %%doc}
 %license COPYING.LIB
-%defattr(555,root,root,-)
 %{_libdir}/libdevmapper-event.so.*
 
 %package -n device-mapper-event-devel
@@ -707,7 +644,6 @@ This package contains files needed to develop applications that use
 the device-mapper event library.
 
 %files -n device-mapper-event-devel
-%defattr(444,root,root,-)
 %{_libdir}/libdevmapper-event.so
 %{_includedir}/libdevmapper-event.h
 %{_libdir}/pkgconfig/devmapper-event.pc
