@@ -61,6 +61,7 @@ Patch7: 0003-Disable-udev-rules-if-udev-flags-can-t-be-obtained.patch
 Patch8: 0004-Drop-support-for-very-old-kernels.patch
 Patch9: 0005-Allow-overprovisioning-check-to-be-disabled.patch
 Patch10: 0006-Do-not-write-to-already-errored-stream.patch
+Patch11: 0007-change-default-thin-threshold.patch
 
 BuildRequires: make
 BuildRequires: gcc
