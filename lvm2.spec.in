@@ -59,15 +59,6 @@ Release: @REL@%{?dist}
 License: GPLv2
 URL: http://sourceware.org/lvm2
 Source0: ftp://sourceware.org/pub/lvm2/releases/LVM2.%{version}.tgz
-Patch0: lvm2-set-default-preferred_names.patch
-Patch1: lvm2-use-find_config_tree_array.patch
-Patch2: lvm2-set-default-global_filter.patch
-Patch3: 0001-dmsetup-splitname-udevflags-check-for-stdout-errors.patch
-Patch4: 0002-Disable-lvm2-udev-rules-if-dmsetup-splitname-fails.patch
-Patch5: 0003-Disable-udev-rules-if-udev-flags-can-t-be-obtained.patch
-Patch6: 0004-Drop-support-for-very-old-kernels.patch
-Patch7: 0005-Allow-overprovisioning-check-to-be-disabled.patch
-Patch8: 0006-Do-not-write-to-already-errored-stream.patch
 
 BuildRequires: gcc
 %if %{enable_testsuite}
@@ -123,9 +114,6 @@ or more physical volumes and creating one or more logical volumes
 
 %prep
 %setup -q -n LVM2.%{version}
-%patch -P 0 -p1 -b .preferred_names
-%patch -P 1 -p1 -b .find_config_tree_array
-%patch -P 2 -p1 -b .global_filter
 
 %build
 %global _default_pid_dir /run
