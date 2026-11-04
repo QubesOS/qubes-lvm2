@@ -1,4 +1,4 @@
-%global device_mapper_version 1.02.199
+%global device_mapper_version 1.02.212
 
 %global enable_cache 1
 %global enable_lvmdbusd 1
